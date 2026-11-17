@@ -1,8 +1,16 @@
-$log = "$env:USERPROFILE\Desktop\log.txt"
+$profiles = netsh wlan show profiles
 
-Test-Path $log
+$result = foreach ($line in $profiles) {
+    if ($line -match ':\s*(.+)$') {
+        $name = $Matches[1].Trim()
 
-if (Test-Path $log) {
-    Get-Item $log | Select-Object Length
-    Get-Content $log
+        if ($name -and $name -notmatch '^(All User Profile|Benutzerprofile|Profiles)$') {
+            [PSCustomObject]@{
+                SSID = $name
+            }
+        }
+    }
 }
+
+$result | Format-Table -AutoSize |
+    Out-File "$env:USERPROFILE\Desktop\wifi-log.txt"
